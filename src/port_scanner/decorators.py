@@ -22,11 +22,11 @@ def rate_limit(interval: int) -> Callable:
             # Check if the function has been called before
             if func.__name__ not in last_call_times:
                 last_call_times[func.__name__] = time.time()
-
-            # Check if enough time has passed since the last call
-            elapsed_time = time.time() - last_call_times[func.__name__]
-            if elapsed_time < interval:
-                time.sleep(interval - elapsed_time)
+            else:
+                # Check if enough time has passed since the last call
+                elapsed_time = time.time() - last_call_times[func.__name__]
+                if elapsed_time < interval:
+                    time.sleep(interval - elapsed_time)
 
             # Update the last call time
             last_call_times[func.__name__] = time.time()
