@@ -1,3 +1,4 @@
+import ipaddress
 import platform
 import re
 import socket
@@ -106,3 +107,21 @@ def is_port_open(host: str, port: int) -> bool:
     else:
         # the connection was established, port is open!
         return True
+
+
+def arp_scan(ip_range: str):
+    devices = []
+    for ip in ipaddress.IPv4Network(ip_range):
+        try:
+            output = subprocess.check_output(["arp", "-a", str(ip)])  # noqa: S607, S603
+            output = output.decode("utf-8")
+            lines = output.split("\n")
+            for line in lines:
+                match = re.match(r"^\s*([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\s+([0-9a-fA-F:]+)", line)
+                if match:
+                    ip_address = match.group(1)
+                    devices.append(ip_address)
+        except subprocess.CalledProcessError:
+            pass
+
+    return devices

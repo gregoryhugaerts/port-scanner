@@ -1,3 +1,4 @@
+import ipaddress
 import shutil
 import sys
 from typing import Annotated
@@ -12,7 +13,7 @@ from port_scanner.networking import is_ip_address, is_port_open, ping
 
 LOGGER = get_logger("port-scan.log")
 
-app = typer.Typer()
+app = typer.Typer(no_args_is_help=True)
 
 console = Console()
 
@@ -27,11 +28,6 @@ def _typer_check_host(host: str) -> str:
     Raises:
     ------
         typer.BadParameter: raised if host is not an ip address
-
-    Returns:
-    -------
-        str: the host string if it is an ip address
-
     """
     if not is_ip_address(host):
         msg = "Host needs to be an ip address"
@@ -40,12 +36,43 @@ def _typer_check_host(host: str) -> str:
         return host
 
 
+def _typer_check_range(ip_range: str):
+    """Check if `ip_range` is a valid ipv4network for typer
+
+    Args:
+        ip_range (str): the range to check
+
+    Raises:
+        typer.BadParameter: raised if `ip_range` is not a network
+    """
+    try:
+        ipaddress.IPv4Network(ip_range)
+        return ip_range
+    except (ipaddress.AddressValueError, ipaddress.NetmaskValueError):
+        msg = "Host needs to be a valid ip range (ip/mask)"
+        raise typer.BadParameter(msg) from None
+
+
 @app.command()
-def main(
+def scan_arp(ip_range: Annotated[str, typer.Option(callback=_typer_check_range, prompt=True)]):
+    """perform an arp scan of the ip-range."""
+    from port_scanner import networking
+
+    devices = networking.arp_scan(ip_range)
+    table = Table()
+    table.add_column("device ip address")
+    for device in devices:
+        table.add_row(device)
+    console.print(table)
+
+
+@app.command()
+def port_scan(
     host: Annotated[str, typer.Option(callback=_typer_check_host, prompt=True)],
     start_port: Annotated[int, typer.Option(prompt=True)],
     end_port: Annotated[int, typer.Option(prompt=True)],
 ) -> None:
+    """Scan host's ports from start-port to end-port"""
     if ping(host):
         LOGGER.info(f"{host} seems to be up")
     else:
