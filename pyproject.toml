@@ -1,0 +1,156 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "port-scanner"
+dynamic = ["version"]
+description = 'simple port scanner implementation for a becode python project'
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+keywords = []
+authors = [{ name = "Gregory Hugaerts", email = "gregory.hugaerts@gmail.com" }]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = ["typer", "rich", "pre-commit"]
+
+[project.urls]
+Documentation = "https://github.com/gregoryhugaerts/port-scanner#readme"
+Issues = "https://github.com/gregoryhugaerts/port-scanner/issues"
+Source = "https://github.com/gregoryhugaerts/port-scanner"
+
+[tool.hatch.version]
+path = "src/port_scanner/__about__.py"
+
+[tool.hatch.envs.default]
+path = ".venv"
+dependencies = ["rich", "typer", "hypothesis"]
+
+[tool.hatch.envs.default.scripts]
+scanner = "python src/port_scanner/ {args}"
+
+# Test environment
+[tool.hatch.envs.test]
+dependencies = [
+  "pytest",
+  "pytest-cov",
+  "pytest-randomly",
+  "pytest-mock",
+  "hypothesis",
+]
+
+[[tool.hatch.envs.test.matrix]]
+python = ["3.11", "3.12"]
+
+
+[tool.hatch.envs.test.scripts]
+test = "pytest --no-header {args}"
+test-cov = "pytest --cov-report=xml --cov {args}"
+cov-report = "coverage report"
+cov = ["test-cov", "cov-report"]
+
+# Lint environment
+[tool.hatch.envs.lint]
+dependencies = [
+  # Tools
+  "pyright",
+  "ruff",
+  "pyupgrade",
+  "pytest",
+  "pytest-mock",
+]
+
+[tool.hatch.envs.lint.scripts]
+run-pyright = "pyright {args:.}"
+run-ruff-format = "ruff format --quiet {args:.}"
+run-ruff = "ruff check --quiet --fix --exit-non-zero-on-fix {args:.}"
+run-pyupgrade = "pyupgrade --py311-plus {args}"
+run-all-pyupgrade = "pyupgrade --py311-plus"
+python = ["run-pyright", "run-ruff-format", "run-ruff", "run-all-pyupgrade"]
+all = ["python"]
+
+
+# Pyright
+[tool.pyright]
+typeCheckingMode = "basic"
+venvPath = "."
+venv = ".venv"
+
+# Ruff
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+select = [
+  "A",
+  "ARG",
+  "B",
+  "C",
+  "DJ",
+  "DTZ",
+  "E",
+  "EM",
+  "F",
+  "FBT",
+  "I",
+  "ICN",
+  "ISC",
+  "N",
+  "PLC",
+  "PLE",
+  "PLR",
+  "PLW",
+  "Q",
+  "RUF",
+  "S",
+  "T",
+  "TID",
+  "UP",
+  "W",
+  "YTT",
+]
+ignore = [
+  # Allow non-abstract empty methods in abstract base classes
+  "B027",
+  # Allow boolean positional values in function calls, like `dict.get(... True)`
+  "FBT003",
+  # Ignore checks for possible passwords
+  "S105",
+  "S106",
+  "S107",
+  # Ignore complexity
+  "C901",
+  "PLR0911",
+  "PLR0912",
+  "PLR0913",
+  "PLR0915",
+]
+unfixable = [
+  # Don't touch unused imports
+  "F401",
+]
+
+[tool.ruff.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ruff.per-file-ignores]
+"tests/**/*" = ["PLR2004", "S101", "TID252"]
+
+# Coverage
+[tool.coverage.run]
+source = ["."]
+branch = true
+parallel = true
+omit = ["config/__version__.py"]
+
+[tool.coverage.report]
+exclude_lines = ["no cov", "if __name__ == .__main__.:", "if TYPE_CHECKING:"]
