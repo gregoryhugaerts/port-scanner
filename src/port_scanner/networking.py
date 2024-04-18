@@ -69,7 +69,7 @@ def ping(host: str) -> bool:
     return subprocess.call(command, stdout=subprocess.DEVNULL) == 0  # noqa: S603
 
 
-def __ping(host: str) -> bool:
+def __ping(host: str) -> bool:  # pragma: no cover
     """Do not use, it's flaky"""
     if not is_ip_address(host):
         msg = "Host needs to be an ip address"

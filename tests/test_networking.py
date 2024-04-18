@@ -3,7 +3,8 @@ import socket
 import hypothesis.strategies as st
 import pytest
 from hypothesis import given
-from port_scanner.networking import arp_scan, is_ip_address, is_port_open, ping
+from port_scanner.networking import arp_scan, is_ip_address, is_port_open, ping, tcp_syn_scan
+from scapy.all import TCP  # type: ignore
 
 
 @given(st.lists(st.integers(min_value=0, max_value=255), min_size=4, max_size=4))  # make a list of 4 numbers from 0-255
@@ -81,7 +82,7 @@ def test_arp_scan(mocker):
         None,
     )
 
-    # Set the return value of srp to the mock response
+    # Set the return value of srp to the mocker response
     mocker.patch("port_scanner.networking.srp", return_value=mock_response)
 
     # Perform the ARP scan
@@ -94,3 +95,93 @@ def test_arp_scan(mocker):
 def test_arp_scan_wrong_type():
     with pytest.raises(ValueError):
         arp_scan("invalid")
+
+
+def test_tcp_syn_scan_open_port(mocker):
+    # Mock a response with SYN-ACK flag set (indicating an open port)
+    mock_response = mocker.MagicMock()
+    mock_response.haslayer.return_value = True
+    mock_response[TCP].flags = "SA"  # SYN-ACK flag
+
+    # Set the return value of sr1 to the mocker response
+    mocker.patch("port_scanner.networking.sr1", return_value=mock_response)
+
+    # Perform the TCP SYN scan
+    result = tcp_syn_scan("192.168.1.1", 80)
+
+    # Check if the function returns True for an open port
+    assert result
+
+
+def test_tcp_syn_scan_closed_port(mocker):
+    # Mock a response with RST flag set (indicating a closed port)
+    mock_response = mocker.MagicMock()
+    mock_response.haslayer.return_value = True
+    mock_response[TCP].flags = "RA"  # RST flag
+
+    # Set the return value of sr1 to the mocker response
+    mocker.patch("port_scanner.networking.sr1", return_value=mock_response)
+
+    # Perform the TCP SYN scan
+    result = tcp_syn_scan("192.168.1.1", 80)
+
+    # Check if the function returns False for a closed port
+    assert not result
+
+
+def test_tcp_syn_scan_filtered_port(mocker):
+    # Mock a response with R flag set (indicating a filtered port)
+    mock_response = mocker.MagicMock()
+    mock_response.haslayer.return_value = True
+    mock_response[TCP].flags = "R"  # Reset flag
+
+    # Set the return value of sr1 to the mock response
+    mocker.patch("port_scanner.networking.sr1", return_value=mock_response)
+
+    # Perform the TCP SYN scan
+    result = tcp_syn_scan("192.168.1.1", 80)
+
+    # Check if the function returns False for a filtered port
+    assert not result
+
+
+def test_tcp_syn_scan_no_tcp(mocker):
+    # Mock a response with R flag set (indicating a filtered port)
+    mock_response = mocker.MagicMock()
+    mock_response.haslayer.return_value = False
+
+    # Set the return value of sr1 to the mock response
+    mocker.patch("port_scanner.networking.sr1", return_value=mock_response)
+
+    # Perform the TCP SYN scan
+    result = tcp_syn_scan("192.168.1.1", 80)
+
+    # Check if the function returns False for a filtered port
+    assert not result
+
+
+def test_tcp_syn_scan_other_status(mocker):
+    # Mock a response with R flag set (indicating a filtered port)
+    mock_response = mocker.MagicMock()
+    mock_response.haslayer.return_value = True
+    mock_response[TCP].flags = "X"
+
+    # Set the return value of sr1 to the mock response
+    mocker.patch("port_scanner.networking.sr1", return_value=mock_response)
+
+    # Perform the TCP SYN scan
+    result = tcp_syn_scan("192.168.1.1", 80)
+
+    # Check if the function returns False for a filtered port
+    assert not result
+
+
+def test_tcp_syn_scan_no_response(mocker):
+    # Set sr1 to return None (indicating no response)
+    mocker.patch("port_scanner.networking.sr1", return_value=None)
+
+    # Perform the TCP SYN scan
+    result = tcp_syn_scan("192.168.1.1", 80)
+
+    # Check if the function returns False for no response
+    assert not result
