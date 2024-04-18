@@ -10,6 +10,7 @@ _LOCALHOST = "127.0.0.1"
 
 def test_app_portscan_localhost_with_open_port(mocker):
     mocker.patch("port_scanner.app.is_port_open", return_value=True)
+    mocker.patch("port_scanner.app.ping", return_value=True)
 
     result = runner.invoke(app, ["port-scan", "--host", f"{_LOCALHOST}", "--start-port", "20", "--end-port", "20"])
     assert result.exit_code == 0
@@ -20,6 +21,7 @@ def test_app_portscan_localhost_with_open_port(mocker):
 
 def test_app_portscan_localhost_with_closed_port(mocker):
     mocker.patch("port_scanner.app.is_port_open", return_value=False)
+    mocker.patch("port_scanner.app.ping", return_value=True)
 
     result = runner.invoke(app, ["port-scan", "--host", f"{_LOCALHOST}", "--start-port", "20", "--end-port", "20"])
     assert result.exit_code == 0
@@ -30,6 +32,7 @@ def test_app_portscan_localhost_with_closed_port(mocker):
 
 def test_app_portscan_localhost_with_multiple_port(mocker):
     mocker.patch("port_scanner.app.is_port_open", return_value=False)
+    mocker.patch("port_scanner.app.ping", return_value=True)
 
     result = runner.invoke(app, ["port-scan", "--host", f"{_LOCALHOST}", "--start-port", "20", "--end-port", "21"])
     assert result.exit_code == 0

@@ -72,15 +72,17 @@ def port_scan(
     start_port: Annotated[int, typer.Option(prompt=True)],
     end_port: Annotated[int, typer.Option(prompt=True)],
     use_tcp_syn: bool = False,  # noqa: FBT001, FBT002
+    skip_ping: bool = False,  # noqa: FBT002, FBT001
 ) -> None:
     """Scan host's ports from start-port to end-port"""
-    if ping(host):
-        console.print(f"{host} seems to be up")
-        LOGGER.info(f"{host} seems to be up")
-    else:
-        console.print(f"{host} could not be pinged")
-        LOGGER.error(f"{host} could not be pinged")
-        sys.exit(1)
+    if not skip_ping:
+        if ping(host):
+            console.print(f"{host} seems to be up")
+            LOGGER.info(f"{host} seems to be up")
+        else:
+            console.print(f"{host} could not be pinged")
+            LOGGER.error(f"{host} could not be pinged")
+            sys.exit(1)
     terminal_width, _ = shutil.get_terminal_size()  # get terminal width
     table = Table()
     table.add_column("Port")

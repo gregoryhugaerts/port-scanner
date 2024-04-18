@@ -1,6 +1,8 @@
 import ipaddress
+import platform
 import re
 import socket
+import subprocess
 
 from scapy.all import ARP, ICMP, IP, TCP, Ether, sr1, srp  # type: ignore
 
@@ -45,20 +47,30 @@ def is_ip_address(address: str) -> bool:
 
 def ping(host: str) -> bool:
     """Pings a `host`.
-
     Args:
     ----
         host (str): ip address of the host
-
     Raises:
     ------
         TypeError: raised when host isn't an ip address
-
     Returns:
     -------
         bool: whether ping was successful
-
     """
+    if not is_ip_address(host):
+        msg = "Host needs to be an ip address"
+        raise ValueError(msg)
+    # Option for the number of packets
+    param = "-n" if platform.system().lower() == "windows" else "-c"
+
+    # Building the command. Ex: "ping -c 1 google.com"
+    command = ["ping", param, "1", host]
+
+    return subprocess.call(command, stdout=subprocess.DEVNULL) == 0  # noqa: S603
+
+
+def __ping(host: str) -> bool:
+    """Do not use, it's flaky"""
     if not is_ip_address(host):
         msg = "Host needs to be an ip address"
         raise ValueError(msg)
