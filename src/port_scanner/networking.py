@@ -1,10 +1,8 @@
 import ipaddress
-import platform
 import re
 import socket
-import subprocess
 
-from scapy.all import ARP, Ether, srp  # type: ignore
+from scapy.all import ARP, ICMP, IP, TCP, Ether, sr1, srp  # type: ignore
 
 from port_scanner.decorators import rate_limit
 
@@ -64,13 +62,20 @@ def ping(host: str) -> bool:
     if not is_ip_address(host):
         msg = "Host needs to be an ip address"
         raise ValueError(msg)
-    # Option for the number of packets
-    param = "-n" if platform.system().lower() == "windows" else "-c"
+    # Craft an ICMP Echo Request packet (ping packet)
+    icmp_packet = IP(dst=host) / ICMP(type=8)
 
-    # Building the command. Ex: "ping -c 1 google.com"
-    command = ["ping", param, "1", host]
+    # Send the packet and receive a response
+    response = sr1(icmp_packet, timeout=3, verbose=False)
 
-    return subprocess.call(command, stdout=subprocess.DEVNULL) == 0  # noqa: S603
+    if response is not None:
+        # Analyze the response
+        if response.haslayer(ICMP):
+            if response[ICMP].type == 0:  # ICMP Echo Reply
+                return True
+            elif response[ICMP].type == 3:  # ICMP Destination Unreachable  # noqa: PLR2004
+                return False
+    return False
 
 
 @rate_limit(1)
@@ -139,3 +144,23 @@ def arp_scan(ip_network: str) -> list[str]:
         devices.append(received.psrc)
 
     return devices
+
+
+@rate_limit(1)
+def tcp_syn_scan(target_ip: str, target_port: int) -> bool:
+    # Craft a TCP SYN packet
+    syn_packet = IP(dst=target_ip) / TCP(dport=target_port, flags="S")
+
+    # Send the packet and receive a response
+    response = sr1(syn_packet, timeout=2, verbose=False)
+
+    if response is not None:
+        # Analyze the response
+        if response.haslayer(TCP):
+            if response[TCP].flags == "SA":
+                return True
+            elif response[TCP].flags == "RA":
+                return False
+            elif response[TCP].flags == "R":
+                return False
+    return False
