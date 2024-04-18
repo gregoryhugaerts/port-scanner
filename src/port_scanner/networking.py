@@ -4,6 +4,8 @@ import re
 import socket
 import subprocess
 
+from scapy.all import ARP, Ether, srp  # type: ignore
+
 from port_scanner.decorators import rate_limit
 
 # regex that matches ipv4 addresses
@@ -109,19 +111,31 @@ def is_port_open(host: str, port: int) -> bool:
         return True
 
 
-def arp_scan(ip_range: str):
+def arp_scan(ip_network: str) -> list[str]:
+    """Perform an arp scan on `ip_network`
+
+    Args:
+        ip_network (str): valid ip network for `ip_address.ip_network`
+
+    Raises:
+        ValueError: if the string passed isn't either a v4 or a v6
+      address
+
+    Returns:
+        list[str]: List of ip addresses on the network
+    """
+    try:
+        ipaddress.ip_network(ip_network)
+    except ValueError:
+        msg = "Not a valid ip network"
+        raise ValueError(msg) from None
+    arp_request = ARP(pdst=ip_network)
+    ether = Ether(dst="ff:ff:ff:ff:ff:ff")
+    arp_broadcast = ether / arp_request
+    answered_list, _ = srp(arp_broadcast, timeout=1, verbose=False)
+
     devices = []
-    for ip in ipaddress.IPv4Network(ip_range):
-        try:
-            output = subprocess.check_output(["arp", "-a", str(ip)])  # noqa: S607, S603
-            output = output.decode("utf-8")
-            lines = output.split("\n")
-            for line in lines:
-                match = re.match(r"^\s*([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\s+([0-9a-fA-F:]+)", line)
-                if match:
-                    ip_address = match.group(1)
-                    devices.append(ip_address)
-        except subprocess.CalledProcessError:
-            pass
+    for _, received in answered_list:
+        devices.append(received.psrc)
 
     return devices

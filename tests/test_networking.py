@@ -3,7 +3,7 @@ import socket
 import hypothesis.strategies as st
 import pytest
 from hypothesis import given
-from port_scanner.networking import is_ip_address, is_port_open, ping
+from port_scanner.networking import arp_scan, is_ip_address, is_port_open, ping
 
 
 @given(st.lists(st.integers(min_value=0, max_value=255), min_size=4, max_size=4))  # make a list of 4 numbers from 0-255
@@ -69,3 +69,28 @@ def test_is_port_open_port_not_in_range():
         is_port_open("127.0.0.1", -1)
     with pytest.raises(ValueError):
         is_port_open("127.0.0.1", 100000)
+
+
+def test_arp_scan(mocker):
+    # Mock response packets
+    mock_response = (
+        [
+            (mocker.MagicMock(), mocker.MagicMock(psrc="192.168.0.1")),
+            (mocker.MagicMock(), mocker.MagicMock(psrc="192.168.0.2")),
+        ],
+        None,
+    )
+
+    # Set the return value of srp to the mock response
+    mocker.patch("port_scanner.networking.srp", return_value=mock_response)
+
+    # Perform the ARP scan
+    result = arp_scan("192.168.0.0/24")
+
+    # Check if the function returns the expected list of IP addresses
+    assert result == ["192.168.0.1", "192.168.0.2"]
+
+
+def test_arp_scan_wrong_type():
+    with pytest.raises(ValueError):
+        arp_scan("invalid")

@@ -22,7 +22,7 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
-dependencies = ["typer", "rich", "pre-commit"]
+dependencies = ["typer", "rich", "scapy"]
 
 [project.urls]
 Documentation = "https://github.com/gregoryhugaerts/port-scanner#readme"
@@ -34,7 +34,7 @@ path = "src/port_scanner/__about__.py"
 
 [tool.hatch.envs.default]
 path = ".venv"
-dependencies = ["rich", "typer", "hypothesis"]
+dependencies = ["rich", "typer", "hypothesis", "scapy"]
 
 [tool.hatch.envs.default.scripts]
 scanner = "python src/port_scanner/ {args}"
