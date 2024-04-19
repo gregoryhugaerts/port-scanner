@@ -34,7 +34,7 @@ path = "src/port_scanner/__about__.py"
 
 [tool.hatch.envs.default]
 path = ".venv"
-dependencies = ["rich", "typer", "hypothesis", "scapy"]
+dependencies = ["rich", "typer", "hypothesis", "scapy", "textual"]
 
 [tool.hatch.envs.default.scripts]
 scanner = "python src/port_scanner/ {args}"

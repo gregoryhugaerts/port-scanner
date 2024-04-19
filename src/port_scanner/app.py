@@ -101,3 +101,10 @@ def port_scan(
             else:
                 LOGGER.info(f"port {port} on {host} is closed")
                 table.add_row(f"{port}", "[red]closed[/]")
+
+
+@app.command()
+def tui():
+    from port_scanner.tui.tui import TUI
+
+    TUI().run()

@@ -1,0 +1,12 @@
+Sidebar {
+    dock: left;
+    padding-top: 1;
+    width: 0.1fr;
+}
+
+Results {
+    padding-top: 1;
+    dock: right;
+    width: 0.9fr;
+    text-align: right;
+}
