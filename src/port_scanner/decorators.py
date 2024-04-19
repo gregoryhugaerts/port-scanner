@@ -5,7 +5,7 @@ from collections.abc import Callable
 from functools import wraps
 
 
-def rate_limit(interval: int) -> Callable:
+def rate_limit(interval: float) -> Callable:
     """Rate limit a function.
 
     Args:

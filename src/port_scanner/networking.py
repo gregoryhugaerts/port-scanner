@@ -6,8 +6,6 @@ import subprocess
 
 from scapy.all import ARP, ICMP, IP, TCP, Ether, sr1, srp  # type: ignore
 
-from port_scanner.decorators import rate_limit
-
 # regex that matches ipv4 addresses
 IPV4_ADDRESS_PATTERN = re.compile(
     r""" # first octet
@@ -90,7 +88,6 @@ def __ping(host: str) -> bool:  # pragma: no cover
     return False
 
 
-@rate_limit(1)
 def is_port_open(host: str, port: int) -> bool:
     """Determine whether `host` has the `port` open.
 
@@ -116,7 +113,7 @@ def is_port_open(host: str, port: int) -> bool:
     # creates a new socket
     s = socket.socket()
     try:
-        s.settimeout(1)
+        s.settimeout(0.1)
         # tries to connect to host using that port
         s.connect((host, port))
     except TimeoutError:
@@ -158,13 +155,12 @@ def arp_scan(ip_network: str) -> list[str]:
     return devices
 
 
-@rate_limit(1)
 def tcp_syn_scan(target_ip: str, target_port: int) -> bool:
     # Craft a TCP SYN packet
     syn_packet = IP(dst=target_ip) / TCP(dport=target_port, flags="S")
 
     # Send the packet and receive a response
-    response = sr1(syn_packet, timeout=2, verbose=False)
+    response = sr1(syn_packet, timeout=0.1, verbose=False)
 
     if response is not None:
         # Analyze the response
