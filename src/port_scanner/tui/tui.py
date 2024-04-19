@@ -1,3 +1,4 @@
+import ipaddress
 import typing
 from dataclasses import dataclass
 from operator import attrgetter
@@ -29,6 +30,9 @@ class _Port:
 class _Target:
     ip: str
     ports: set[_Port]
+
+    def __post_init__(self):
+        ipaddress.ip_address(self.ip)
 
     def __hash__(self) -> int:
         return self.ip.__hash__()
@@ -91,7 +95,13 @@ class TUI(App):
 
     def action_add_target(self):
         def add_target(target_ip: str):
-            targets.append(_Target(target_ip, set()))
+            try:
+                targets.append(_Target(target_ip, set()))
+            except ValueError:
+                pass
+            self.current_target = targets[-1]
+            list_view = self.query_one(ListView)
+            list_view.index = len(list_view.children) - 1
             self.refresh(recompose=True)
 
         self.push_screen(TargetModal(), add_target)
@@ -110,9 +120,15 @@ class TUI(App):
             if "-" in port_range:
                 (start_port, end_port) = port_range.split("-")
                 for port in range(int(start_port), int(end_port) + 1):
-                    self.current_target.ports.add(_Port(port))
+                    try:
+                        self.current_target.ports.add(_Port(port))
+                    except ValueError:
+                        pass
             else:
-                self.current_target.ports.add(_Port(int(port_range)))
+                try:
+                    self.current_target.ports.add(_Port(int(port_range)))
+                except ValueError:
+                    pass
             self._scan_ports()
 
         if self.current_target is None:
@@ -125,7 +141,7 @@ class TUI(App):
         yield Header()
         yield Footer()
 
-    def _update_table(self):
+    def _update_table(self) -> None:
         table = self.query_one(DataTable)
         table.clear(True)
         table.add_column("Port")
