@@ -1,5 +1,4 @@
 import ipaddress
-import shutil
 import sys
 from typing import Annotated
 
@@ -8,6 +7,7 @@ from rich.console import Console
 from rich.live import Live
 from rich.table import Table
 
+from port_scanner.decorators import rate_limit
 from port_scanner.logger import get_logger
 from port_scanner.networking import is_ip_address, is_port_open, ping, tcp_syn_scan
 
@@ -71,6 +71,7 @@ def port_scan(
     host: Annotated[str, typer.Option(callback=_typer_check_host, prompt=True)],
     start_port: Annotated[int, typer.Option(prompt=True)],
     end_port: Annotated[int, typer.Option(prompt=True)],
+    wait_between_ports: Annotated[float, typer.Option()] = 0,
     use_tcp_syn: bool = False,  # noqa: FBT001, FBT002
     skip_ping: bool = False,  # noqa: FBT002, FBT001
 ) -> None:
@@ -83,18 +84,20 @@ def port_scan(
             console.print(f"{host} could not be pinged")
             LOGGER.error(f"{host} could not be pinged")
             sys.exit(1)
-    terminal_width, _ = shutil.get_terminal_size()  # get terminal width
+
+    if use_tcp_syn:
+        scan = tcp_syn_scan
+    else:
+        scan = is_port_open
+    if wait_between_ports:
+        scan = rate_limit(wait_between_ports)(scan)
     table = Table()
     table.add_column("Port")
     table.add_column("Status")
     with Live(table, refresh_per_second=4):
         ports = range(max(1, start_port), min(65535, end_port + 1))
         for port in ports:
-            response = False
-            if use_tcp_syn:
-                response = tcp_syn_scan(host, port)
-            else:
-                response = is_port_open(host, port)
+            response = scan(host, port)
             if response:
                 LOGGER.info(f"port {port} on {host} is open")
                 table.add_row(f"{port}", "[green]open[/]")
