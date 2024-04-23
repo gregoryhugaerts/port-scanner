@@ -1,0 +1,14 @@
+# Detecting Port Scanning Activities
+
+## Introduction
+
+Port scanning is a technique that is often used to find weak points in computer networks.
+
+## Detection Techniques
+
+- Network Intrusion Detection Systems
+Uses signature-based detection techniques to compare network traffic against known patterns associated with port scanning.
+
+- Firewall Logging and Analysis: Firewalls can log incoming and outgoing traffic, including port scanning attempts.
+
+- Honeypots: Decoy system specifically designed to attract attacks. Any traffic to them is suspicious

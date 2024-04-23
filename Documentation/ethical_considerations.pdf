@@ -1,0 +1,21 @@
+# Report on Ethical Considerations of Port Scanning
+
+## Introduction
+
+Port scanning is a technique used for discovering open ports on a computer. It is a valuable tool for assessing a networks security, but requires some considerations
+
+## Considerations
+
+- Consent:
+one of the primary considerations of port scanning is obtaining proper authorization before scanning a network or system. Unauthorized port scanning may violate laws and regulations related to computer security and privacy.
+
+> we are scanning only our own pc and vms. team members have given each other permission to do so.
+
+- Intent:
+the motive behind port scanning is critical. While it can bolster security by uncovering vulnerabilities, malicious intent can lead to unauthorized access and cyber threats.
+
+> we are scanning only to learn more about how port scanning works, without malicious intent
+
+- Harm Mitigation: Aggressive scans can disrupt services or trigger security alerts.
+
+> we are only scanning our own machines, so this isn't a consideration in this case.
