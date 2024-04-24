@@ -66,6 +66,27 @@ def test_app_tcp_syn_scan(mocker):
     assert result.exit_code == 0
 
 
+def test_app_tcp_syn_scan_timeout(mocker):
+    mocker.patch("port_scanner.app.tcp_syn_scan", return_value=False)
+    result = runner.invoke(
+        app,
+        [
+            "port-scan",
+            "--host",
+            f"{_LOCALHOST}",
+            "--start-port",
+            "20",
+            "--end-port",
+            "21",
+            "--use-tcp-syn",
+            "--skip-ping",
+            "--wait-between-ports",
+            "2",
+        ],
+    )
+    assert result.stdout
+
+
 def test_app_arp_scan(mocker):
     mocker.patch("port_scanner.networking.arp_scan", return_value=["10.10.10.10", "10.1.1.1"])
     result = runner.invoke(app, ["scan-arp", "--ip-range", "10.10.10.0/24"])
